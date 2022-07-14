@@ -1,13 +1,18 @@
 #pragma once
 #include "lexer.hpp"
-#include <vector>
+#include "ast.hpp"
+#include <memory>
 
 class Parser {
 public:
-    Parser(Lexer& lexer);
-    void parse();
-    const std::vector<Token>& getTokens() const;
+    explicit Parser(Lexer& lexer);
+    std::unique_ptr<AstNode> parse();
+
 private:
+    std::unique_ptr<AstNode> parseExpression();
+    std::unique_ptr<AstNode> parseTerm();
+
     Lexer& lexer;
-    std::vector<Token> tokens;
+    Token currentToken;
+    void advance();
 };
