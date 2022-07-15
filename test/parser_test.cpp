@@ -2,26 +2,28 @@
 #include "lexer.hpp"
 #include "parser.hpp"
 #include "ast.hpp"
-TEST(ParserTest, ConstructsCorrectAstForSimpleExpression) {
-    std::string input = "5 - 2";
+
+TEST(ParserTest, ConstructsCorrectAstForForthSequence) {
+    std::string input = "10 5 DUP";
     Lexer lexer(input);
     Parser parser(lexer);
 
-    std::unique_ptr<AstNode> ast_root = parser.parse();
-    ASSERT_NE(ast_root, nullptr);
+    std::unique_ptr<ProgramNode> ast = parser.parse();
+    ASSERT_NE(ast, nullptr);
 
-    auto* root_node = dynamic_cast<BinaryOpNode*>(ast_root.get());
-    ASSERT_NE(root_node, nullptr) << "Root node should be a BinaryOpNode for '5 - 2'";
+    const auto& nodes = ast->getNodes();
+    ASSERT_EQ(nodes.size(), 3);
 
-    EXPECT_EQ(root_node->toString(), "-");
+    auto* node1 = dynamic_cast<NumberNode*>(nodes[0].get());
+    ASSERT_NE(node1, nullptr);
+    EXPECT_EQ(node1->getValue(), 10.0);
 
-    const auto& left_child = root_node->getLeft();
-    auto* left_num = dynamic_cast<const NumberNode*>(&left_child);
-    ASSERT_NE(left_num, nullptr) << "Left child should be a NumberNode";
-    EXPECT_EQ(left_num->getValue(), 5.0);
+    auto* node2 = dynamic_cast<NumberNode*>(nodes[1].get());
+    ASSERT_NE(node2, nullptr);
+    EXPECT_EQ(node2->getValue(), 5.0);
 
-    const auto& right_child = root_node->getRight();
-    auto* right_num = dynamic_cast<const NumberNode*>(&right_child);
-    ASSERT_NE(right_num, nullptr) << "Right child should be a NumberNode";
-    EXPECT_EQ(right_num->getValue(), 2.0);
+    auto* node3 = dynamic_cast<WordNode*>(nodes[2].get());
+    ASSERT_NE(node3, nullptr);
+    EXPECT_EQ(node3->getToken().text, "DUP");
+    EXPECT_EQ(node3->getToken().type, TokenType::Dup);
 }
