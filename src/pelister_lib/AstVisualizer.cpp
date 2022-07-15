@@ -10,6 +10,7 @@ void AstVisualizer::generateDot(const AstNode& root, const std::string& outputPa
     }
 
     outFile << "digraph AST {\n";
+    outFile << "  rankdir=TB;\n";
     outFile << "  node [shape=box];\n";
     generateDotRecursive(root, outFile);
     outFile << "}\n";
@@ -21,13 +22,11 @@ void AstVisualizer::generateDotRecursive(const AstNode& node, std::ostream& out)
     long myId = nodeCounter++;
     out << "  node" << myId << " [label=\"" << node.toString() << "\"];\n";
 
-    if (auto binOp = dynamic_cast<const BinaryOpNode*>(&node)) {
-        long leftId = nodeCounter;
-        generateDotRecursive(binOp->getLeft(), out);
-        out << "  node" << myId << " -> node" << leftId << ";\n";
-
-        long rightId = nodeCounter;
-        generateDotRecursive(binOp->getRight(), out);
-        out << "  node" << myId << " -> node" << rightId << ";\n";
+    if (auto programNode = dynamic_cast<const ProgramNode*>(&node)) {
+        for (const auto& child : programNode->getNodes()) {
+            long childId = nodeCounter;
+            generateDotRecursive(*child, out);
+            out << "  node" << myId << " -> node" << childId << ";\n";
+        }
     }
 }

@@ -4,6 +4,7 @@
 #include <memory>
 #include <string>
 #include <utility>
+#include <vector>
 
 class AstNode {
 public:
@@ -20,17 +21,24 @@ private:
     double value;
 };
 
-class BinaryOpNode : public AstNode {
+class WordNode : public AstNode {
 public:
-    BinaryOpNode(Token op, std::unique_ptr<AstNode> left, std::unique_ptr<AstNode> right)
-        : op(std::move(op)), left(std::move(left)), right(std::move(right)) {}
-
-    std::string toString() const override { return op.text; }
-    const AstNode& getLeft() const { return *left; }
-    const AstNode& getRight() const { return *right; }
-
+    explicit WordNode(Token token) : token(std::move(token)) {}
+    std::string toString() const override { return token.text; }
+    const Token& getToken() const { return token; }
 private:
-    Token op;
-    std::unique_ptr<AstNode> left;
-    std::unique_ptr<AstNode> right;
+    Token token;
+};
+
+class ProgramNode : public AstNode {
+public:
+    std::string toString() const override { return "Program"; }
+    void addNode(std::unique_ptr<AstNode> node) {
+        nodes.push_back(std::move(node));
+    }
+    const std::vector<std::unique_ptr<AstNode>>& getNodes() const {
+        return nodes;
+    }
+private:
+    std::vector<std::unique_ptr<AstNode>> nodes;
 };

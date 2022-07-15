@@ -1,5 +1,8 @@
 #include <iostream>
 #include <string>
+#include <vector>
+#include <filesystem>
+
 #include "lexer.hpp"
 #include "parser.hpp"
 #include "AstVisualizer.hpp"
@@ -14,8 +17,7 @@ bool find_option(int argc, char* argv[], const std::string& option) {
 }
 
 int main(int argc, char* argv[]) {
-
-    std::string input = "10 + 25 - 5";
+    std::string input = "10 5 DUP * -";
     std::cout << "Input string: \"" << input << "\"" << std::endl;
 
     Lexer lexer(input);
@@ -33,6 +35,7 @@ int main(int argc, char* argv[]) {
             AstVisualizer visualizer;
             visualizer.generateDot(*ast_root, output_path.string());
 
+            std::cout << "\nTo generate an image, install graphviz and run:" << std::endl;
             std::cout << "dot -Tpng " << output_path.string() << " -o ast.png" << std::endl;
 
             return 0;
@@ -41,7 +44,7 @@ int main(int argc, char* argv[]) {
         std::cout << "Parser finished successfully. (No evaluation step yet)" << std::endl;
 
     } catch (const std::exception& e) {
-        std::cerr << "Error: " << e.what() << std::endl;
+        std::cerr << "Parser Error: " << e.what() << std::endl;
         return 1;
     }
 
