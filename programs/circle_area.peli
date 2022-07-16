@@ -1,0 +1,8 @@
+( Calculates the area of a circle from its radius )
+( Formula: Area = pi * r^2 )
+( USAGE: Put a radius on the stack first, e.g. 10 )
+
+10
+DUP *       ( Square the radius )
+3.14159 *   ( Multiply by pi )
+CR .
