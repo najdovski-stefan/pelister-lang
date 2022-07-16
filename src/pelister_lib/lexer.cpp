@@ -34,10 +34,10 @@ static const std::unordered_map<std::string, TokenType> keywords = {
     {"CR", TokenType::Cr}
 };
 
-bool is_integer(const std::string& s) {
-    if (s.empty() || ((!isdigit(s[0])) && (s[0] != '-') && (s[0] != '+'))) return false;
+bool is_double(const std::string& s) {
+    if (s.empty()) return false;
     char* p;
-    strtol(s.c_str(), &p, 10);
+    strtod(s.c_str(), &p);
     return (*p == 0);
 }
 
@@ -45,7 +45,6 @@ bool is_integer(const std::string& s) {
 Lexer::Lexer(std::string source) : source_text(std::move(source)), position(0) {}
 
 Token Lexer::getNextToken() {
-    // Skip whitespace
     while (position < source_text.length() && std::isspace(source_text[position])) {
         position++;
     }
@@ -77,7 +76,7 @@ Token Lexer::getNextToken() {
         return {it->second, word};
     }
 
-    if (is_integer(word)) {
+    if (is_double(word)) {
         return {TokenType::Number, word};
     }
 
