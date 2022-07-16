@@ -3,7 +3,15 @@
 Simple Stack Based interpreted Programming Language, heavly inspired by Forth.
 
 
-# REPL MODE
+## Load from file:
+
+```bash
+./pelilang programs/f_to_c.peli
+```
+
+- More examples in programs folder.
+
+## REPL MODE:
 
 - just add the flag --repl
 
@@ -19,24 +27,29 @@ Pelister-Lang REPL v1.0. Type 'bye' to exit.
 >
 ```
 
-## Programs to try:
+## Programs to try in repl:
 
 1. Arithmetic
 
 ```bash
-> (COMMENT)
+Pelister-Lang REPL v1.0. Type 'bye' to exit.
+> (This is COMMENT, the interpreter will skip this line)
 > 10 5       ( Stack: 10 5 )
 > +          ( Pops 5, pops 10, calculates 10+5=15, pushes 15 )
 <stack bottom> 15 <top>
+> . (PRINT AND POP)
+> 15 <stack bottom> <top>
+>
 ```
 
-- Example:
+- Examples for calculator:
 
 ```bash
 > 10 5 +
 > 70 1 -
 > 42 10 *
 > 28980 420 /
+> 420.03 0.03 -
 ```
 
 ---
