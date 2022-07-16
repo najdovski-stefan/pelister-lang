@@ -56,6 +56,10 @@ void Interpreter::evaluate(const ProgramNode& ast) {
                 case TokenType::Over: {
                     double b = pop(); double a = pop(); push(a); push(b); push(a); break;
                 }
+                case TokenType::Rot: {
+                    double c = pop(); double b = pop(); double a = pop();
+                    push(b); push(c); push(a); break;
+                }
                 case TokenType::Dot: {
                     std::cout << pop() << " "; break;
                 }
