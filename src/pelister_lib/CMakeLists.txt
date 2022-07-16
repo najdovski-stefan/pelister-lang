@@ -2,6 +2,7 @@ add_library(pelister_lib
     lexer.cpp
     parser.cpp
     AstVisualizer.cpp
+    Interpreter.cpp
 )
 
 target_include_directories(pelister_lib
