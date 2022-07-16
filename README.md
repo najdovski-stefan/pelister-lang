@@ -54,6 +54,8 @@ Pelister-Lang REPL v1.0. Type 'bye' to exit.
 
 ---
 
+## Supported Operations:
+
 | Word | Name | Stack Effect | Description |
 | :--- | :--- | :--- | :----------- |
 | `+` | Add | `( a b -- sum )` | Adds the top two numbers. |
