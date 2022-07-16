@@ -19,7 +19,6 @@ TEST(LexerTest, HandlesSimpleNumbersAndOperators) {
 TEST(LexerTest, HandlesForthCoreWordsAndComments) {
     std::string input = ": SQUARE ( n -- n*n ) DUP * ; 10 SQUARE .";
     Lexer lexer(input);
-
     verify_token(lexer, TokenType::Colon, ":");
     verify_token(lexer, TokenType::Word, "SQUARE");
     verify_token(lexer, TokenType::Dup, "DUP");
@@ -28,5 +27,42 @@ TEST(LexerTest, HandlesForthCoreWordsAndComments) {
     verify_token(lexer, TokenType::Number, "10");
     verify_token(lexer, TokenType::Word, "SQUARE");
     verify_token(lexer, TokenType::Dot, ".");
+    verify_token(lexer, TokenType::EndOfFile, "");
+}
+
+TEST(LexerTest, HandlesNegativeNumbers) {
+    std::string input = "-5 10 +";
+    Lexer lexer(input);
+    verify_token(lexer, TokenType::Number, "-5");
+    verify_token(lexer, TokenType::Number, "10");
+    verify_token(lexer, TokenType::Plus, "+");
+    verify_token(lexer, TokenType::EndOfFile, "");
+}
+
+TEST(LexerTest, HandlesEmptyInput) {
+    std::string input = "";
+    Lexer lexer(input);
+    verify_token(lexer, TokenType::EndOfFile, "");
+}
+
+TEST(LexerTest, HandlesOnlyWhitespace) {
+    std::string input = "   \t\n  ";
+    Lexer lexer(input);
+    verify_token(lexer, TokenType::EndOfFile, "");
+}
+
+TEST(LexerTest, IgnoresUnclosedCommentAtEnd) {
+    std::string input = "1 2 ( unfinished comment";
+    Lexer lexer(input);
+    verify_token(lexer, TokenType::Number, "1");
+    verify_token(lexer, TokenType::Number, "2");
+    verify_token(lexer, TokenType::EndOfFile, "");
+}
+
+TEST(LexerTest, HandlesMixedCaseKeywords) {
+    std::string input = "dup DrOp";
+    Lexer lexer(input);
+    verify_token(lexer, TokenType::Word, "dup");
+    verify_token(lexer, TokenType::Word, "DrOp");
     verify_token(lexer, TokenType::EndOfFile, "");
 }

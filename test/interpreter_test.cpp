@@ -1,9 +1,9 @@
 #include <gtest/gtest.h>
 #include "Interpreter.hpp"
-#include "Lexer.hpp"
-#include "Parser.hpp"
+#include "lexer.hpp"
+#include "parser.hpp"
+#include <sstream>
 
-// Helper function to run code through the whole pipeline
 void run(Interpreter& interpreter, const std::string& code) {
     Lexer lexer(code);
     Parser parser(lexer);
@@ -11,7 +11,6 @@ void run(Interpreter& interpreter, const std::string& code) {
     interpreter.evaluate(*ast);
 }
 
-// Test fixture to have a fresh interpreter for each test
 class InterpreterTest : public ::testing::Test {
 protected:
     Interpreter interpreter;
@@ -19,37 +18,24 @@ protected:
 
 TEST_F(InterpreterTest, BasicArithmetic) {
     run(interpreter, "10 5 +");
-    ASSERT_NO_THROW({
-        run(interpreter, ".");
-    }); //print "15 " to stdout
-
     run(interpreter, "20 8 -");
     run(interpreter, "2 *");
     run(interpreter, "6 /");
-
-    ASSERT_NO_THROW({
-        run(interpreter, "."); //  4
-    });
 }
 
 TEST_F(InterpreterTest, StackManipulation) {
-    run(interpreter, "1 2 3"); // Stack: [1, 2, 3]
-    run(interpreter, "DUP");   // Stack: [1, 2, 3, 3]
-    run(interpreter, "DROP");  // Stack: [1, 2, 3]
-    run(interpreter, "SWAP");  // Stack: [1, 3, 2]
-    run(interpreter, "OVER");  // Stack: [1, 3, 2, 3]
-    run(interpreter, "DROP DROP DROP DROP"); // Stack: []
-
+    run(interpreter, "1 2 3");
+    run(interpreter, "DUP");
+    run(interpreter, "DROP");
+    run(interpreter, "SWAP");
+    run(interpreter, "OVER");
+    run(interpreter, "DROP DROP DROP DROP");
     EXPECT_THROW(run(interpreter, "DROP"), std::runtime_error);
 }
 
 TEST_F(InterpreterTest, ComplexOperation) {
-    //(5 DUP * ) = 25
     run(interpreter, "5 DUP *");
-    run(interpreter, "25 -"); // 25 - 25 = 0
-    ASSERT_NO_THROW({
-        run(interpreter, "."); // Prints 0
-    });
+    run(interpreter, "25 -");
 }
 
 TEST_F(InterpreterTest, DivisionByZero) {
@@ -57,7 +43,40 @@ TEST_F(InterpreterTest, DivisionByZero) {
     EXPECT_THROW(run(interpreter, "/"), std::runtime_error);
 }
 
-TEST_F(InterpreterTest, StackUnderflow) {
+TEST_F(InterpreterTest, StackUnderflowForBinaryOperator) {
     run(interpreter, "5");
     EXPECT_THROW(run(interpreter, "+"), std::runtime_error);
+}
+
+TEST_F(InterpreterTest, StackUnderflowForUnaryOperator) {
+    EXPECT_THROW(run(interpreter, "DUP"), std::runtime_error);
+    EXPECT_THROW(run(interpreter, "DROP"), std::runtime_error);
+    EXPECT_THROW(run(interpreter, "."), std::runtime_error);
+}
+
+TEST_F(InterpreterTest, OverOperationRequiresTwoItems) {
+    run(interpreter, "1");
+    EXPECT_THROW(run(interpreter, "OVER"), std::runtime_error);
+}
+
+TEST_F(InterpreterTest, DotCommandPrintsAndConsumes) {
+    std::stringstream buffer;
+    std::streambuf* old_cout = std::cout.rdbuf(buffer.rdbuf());
+
+    run(interpreter, "123 456");
+    run(interpreter, ".");
+    EXPECT_EQ(buffer.str(), "456 ");
+    buffer.str("");
+
+    run(interpreter, ".");
+    EXPECT_EQ(buffer.str(), "123 ");
+
+    EXPECT_THROW(run(interpreter, "."), std::runtime_error);
+
+    std::cout.rdbuf(old_cout);
+}
+
+TEST_F(InterpreterTest, RotOperation) {
+    run(interpreter, "1 2 3");
+    run(interpreter, "ROT");
 }

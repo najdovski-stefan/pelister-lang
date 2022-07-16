@@ -27,3 +27,27 @@ TEST(ParserTest, ConstructsCorrectAstForForthSequence) {
     EXPECT_EQ(node3->getToken().text, "DUP");
     EXPECT_EQ(node3->getToken().type, TokenType::Dup);
 }
+
+TEST(ParserTest, HandlesEmptyInput) {
+    std::string input = "";
+    Lexer lexer(input);
+    Parser parser(lexer);
+
+    std::unique_ptr<ProgramNode> ast = parser.parse();
+    ASSERT_NE(ast, nullptr);
+
+    const auto& nodes = ast->getNodes();
+    ASSERT_EQ(nodes.size(), 0);
+}
+
+TEST(ParserTest, HandlesOnlyWhitespace) {
+    std::string input = "  \t  \n";
+    Lexer lexer(input);
+    Parser parser(lexer);
+
+    std::unique_ptr<ProgramNode> ast = parser.parse();
+    ASSERT_NE(ast, nullptr);
+
+    const auto& nodes = ast->getNodes();
+    ASSERT_EQ(nodes.size(), 0);
+}
