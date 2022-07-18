@@ -80,3 +80,42 @@ TEST_F(InterpreterTest, RotOperation) {
     run(interpreter, "1 2 3");
     run(interpreter, "ROT");
 }
+
+TEST_F(InterpreterTest, LogicalOperations) {
+    run(interpreter, "1 1 AND");
+    EXPECT_EQ(interpreter.getStack().back(), 1.0);
+    run(interpreter, "1 0 AND");
+    EXPECT_EQ(interpreter.getStack().back(), 0.0);
+
+    run(interpreter, "7 3 AND"); // 0111 & 0011 = 0011 (3)
+    EXPECT_EQ(interpreter.getStack().back(), 3.0);
+
+    run(interpreter, "1 0 OR");
+    EXPECT_EQ(interpreter.getStack().back(), 1.0);
+    run(interpreter, "5 2 OR"); // 0101 | 0010 = 0111 (7)
+    EXPECT_EQ(interpreter.getStack().back(), 7.0);
+
+    run(interpreter, "1 NOT");
+    EXPECT_EQ(interpreter.getStack().back(), 0.0);
+    run(interpreter, "0 NOT");
+    EXPECT_EQ(interpreter.getStack().back(), 1.0);
+    run(interpreter, "-1 NOT");
+    EXPECT_EQ(interpreter.getStack().back(), 0.0);
+}
+
+TEST_F(InterpreterTest, ComparisonOperations) {
+    run(interpreter, "5 5 =");
+    EXPECT_EQ(interpreter.getStack().back(), 1.0);
+    run(interpreter, "5 4 =");
+    EXPECT_EQ(interpreter.getStack().back(), 0.0);
+
+    run(interpreter, "4 5 <");
+    EXPECT_EQ(interpreter.getStack().back(), 1.0);
+    run(interpreter, "5 4 <");
+    EXPECT_EQ(interpreter.getStack().back(), 0.0);
+
+    run(interpreter, "5 4 >");
+    EXPECT_EQ(interpreter.getStack().back(), 1.0);
+    run(interpreter, "4 5 >");
+    EXPECT_EQ(interpreter.getStack().back(), 0.0);
+}
