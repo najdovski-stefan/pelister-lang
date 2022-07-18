@@ -7,6 +7,7 @@ class Interpreter {
 public:
     void evaluate(const ProgramNode& ast);
     void printStack() const;
+    const std::vector<double>& getStack() const;
 
 private:
     void push(double value);
