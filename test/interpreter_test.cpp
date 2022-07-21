@@ -2,7 +2,6 @@
 #include "Interpreter.hpp"
 #include "lexer.hpp"
 #include "parser.hpp"
-#include <sstream>
 
 void run(Interpreter& interpreter, const std::string& code) {
     Lexer lexer(code);
@@ -118,4 +117,39 @@ TEST_F(InterpreterTest, ComparisonOperations) {
     EXPECT_EQ(interpreter.getStack().back(), 1.0);
     run(interpreter, "4 5 >");
     EXPECT_EQ(interpreter.getStack().back(), 0.0);
+}
+
+
+TEST_F(InterpreterTest, ControlFlowIfThen) {
+    run(interpreter, "1 IF 100 THEN");
+    EXPECT_EQ(interpreter.getStack().back(), 100.0);
+    run(interpreter, "0 IF 200 THEN");
+    EXPECT_EQ(interpreter.getStack().size(), 1); // no change
+}
+
+TEST_F(InterpreterTest, ControlFlowIfElseThen) {
+    run(interpreter, "1 IF 100 ELSE 200 THEN");
+    EXPECT_EQ(interpreter.getStack().back(), 100.0);
+    run(interpreter, "0 IF 100 ELSE 200 THEN");
+    EXPECT_EQ(interpreter.getStack().back(), 200.0);
+}
+
+TEST_F(InterpreterTest, CombinedLogicAndControlFlow) {
+    run(interpreter, "10 5 > IF 100 ELSE 200 THEN 5 +"); // 100 + 5
+    EXPECT_EQ(interpreter.getStack().back(), 105.0);
+
+    run(interpreter, "10 20 > IF 100 ELSE 200 THEN 5 +"); // 200 + 5
+    EXPECT_EQ(interpreter.getStack().back(), 205.0);
+}
+
+TEST_F(InterpreterTest, NestedControlFlow) {
+    run(interpreter, "1 IF 1 IF 100 THEN 50 + THEN");
+    const auto& stack = interpreter.getStack();
+    ASSERT_EQ(stack.size(), 1);
+    EXPECT_EQ(stack[0], 150.0);
+}
+
+TEST_F(InterpreterTest, ParserThrowsOnUnterminatedIf) {
+    EXPECT_THROW(run(interpreter, "1 IF 100"), std::runtime_error);
+    EXPECT_THROW(run(interpreter, "1 IF 100 ELSE 200"), std::runtime_error);
 }

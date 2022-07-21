@@ -30,6 +30,14 @@ TEST(LexerTest, HandlesForthCoreWordsAndComments) {
     verify_token(lexer, TokenType::EndOfFile, "");
 }
 
+TEST(LexerTest, HandlesNestedCommentsCorrectly) {
+    std::string input = "1 ( this is a ( nested ) comment ) 2";
+    Lexer lexer(input);
+    verify_token(lexer, TokenType::Number, "1");
+    verify_token(lexer, TokenType::Number, "2");
+    verify_token(lexer, TokenType::EndOfFile, "");
+}
+
 TEST(LexerTest, HandlesFloatingPointNumbers) {
     std::string input = "3.14 -0.5 100. *";
     Lexer lexer(input);
