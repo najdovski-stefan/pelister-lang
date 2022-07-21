@@ -41,7 +41,6 @@ bool is_double(const std::string& s) {
     return (*p == 0);
 }
 
-
 Lexer::Lexer(std::string source) : source_text(std::move(source)), position(0) {}
 
 Token Lexer::getNextToken() {
@@ -54,14 +53,19 @@ Token Lexer::getNextToken() {
     }
 
     if (source_text[position] == '(') {
-        position++;
-        while (position < source_text.length() && source_text[position] != ')') {
+        position++; // Consume the initial '('
+        int nesting_level = 1;
+
+        while (position < source_text.length() && nesting_level > 0) {
+            if (source_text[position] == '(') {
+                nesting_level++;
+            } else if (source_text[position] == ')') {
+                nesting_level--;
+            }
             position++;
         }
-        if (position < source_text.length()) {
-            position++;
-        }
-        return getNextToken();
+
+        return getNextToken(); // Get the next real token
     }
 
     size_t start = position;

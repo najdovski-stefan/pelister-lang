@@ -1,4 +1,5 @@
 #include "parser.hpp"
+#include <stdexcept>
 
 Parser::Parser(Lexer& lexer) : lexer(lexer), currentToken({TokenType::Unknown, ""}) {
     advance();
@@ -10,15 +11,58 @@ void Parser::advance() {
 
 std::unique_ptr<ProgramNode> Parser::parse() {
     auto programNode = std::make_unique<ProgramNode>();
-
     while (currentToken.type != TokenType::EndOfFile) {
-        if (currentToken.type == TokenType::Number) {
-            double value = std::stod(currentToken.text);
-            programNode->addNode(std::make_unique<NumberNode>(value));
-        } else {
-            programNode->addNode(std::make_unique<WordNode>(currentToken));
-        }
-        advance();
+        programNode->addNode(parseStatement());
     }
     return programNode;
+}
+
+std::unique_ptr<AstNode> Parser::parseStatement() {
+    if (currentToken.type == TokenType::If) {
+        return parseIfStatement();
+    }
+
+    std::unique_ptr<AstNode> node;
+    if (currentToken.type == TokenType::Number) {
+        node = std::make_unique<NumberNode>(std::stod(currentToken.text));
+    } else {
+        node = std::make_unique<WordNode>(currentToken);
+    }
+    advance();
+    return node;
+}
+
+std::unique_ptr<IfNode> Parser::parseIfStatement() {
+    advance(); // Consume 'IF'
+
+    auto true_branch = std::make_unique<ProgramNode>();
+    while (currentToken.type != TokenType::Else && currentToken.type != TokenType::Then) {
+        if (currentToken.type == TokenType::EndOfFile) {
+            throw std::runtime_error("Unterminated IF statement; missing THEN");
+        }
+        true_branch->addNode(parseStatement());
+    }
+
+    std::unique_ptr<ProgramNode> false_branch = nullptr;
+    if (currentToken.type == TokenType::Else) {
+        advance(); // Consume 'ELSE'
+        false_branch = std::make_unique<ProgramNode>();
+        while (currentToken.type != TokenType::Then) {
+            if (currentToken.type == TokenType::EndOfFile) {
+                throw std::runtime_error("Unterminated IF..ELSE statement; missing THEN");
+            }
+            false_branch->addNode(parseStatement());
+        }
+    }
+
+    if (currentToken.type != TokenType::Then) {
+        throw std::runtime_error("Expected THEN to close IF statement");
+    }
+    advance(); // Consume 'THEN'
+
+    if (!false_branch) {
+        false_branch = std::make_unique<ProgramNode>(); // Empty program
+    }
+
+    return std::make_unique<IfNode>(std::move(true_branch), std::move(false_branch));
 }

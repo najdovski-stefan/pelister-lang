@@ -42,3 +42,18 @@ public:
 private:
     std::vector<std::unique_ptr<AstNode>> nodes;
 };
+
+class IfNode : public AstNode {
+public:
+    IfNode(std::unique_ptr<ProgramNode> true_branch, std::unique_ptr<ProgramNode> false_branch)
+        : true_branch(std::move(true_branch)), false_branch(std::move(false_branch)) {}
+
+    std::string toString() const override { return "IF"; }
+    const ProgramNode& getTrueBranch() const { return *true_branch; }
+    const ProgramNode& getFalseBranch() const { return *false_branch; }
+    bool hasFalseBranch() const { return false_branch != nullptr; }
+
+private:
+    std::unique_ptr<ProgramNode> true_branch;
+    std::unique_ptr<ProgramNode> false_branch;
+};

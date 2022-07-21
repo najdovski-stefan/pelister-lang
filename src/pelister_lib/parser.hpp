@@ -9,6 +9,9 @@ public:
     std::unique_ptr<ProgramNode> parse();
 
 private:
+    std::unique_ptr<AstNode> parseStatement();
+    std::unique_ptr<IfNode> parseIfStatement();
+
     Lexer& lexer;
     Token currentToken;
     void advance();
