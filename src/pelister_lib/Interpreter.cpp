@@ -40,8 +40,22 @@ void Interpreter::evaluate(const ProgramNode& ast) {
                 evaluate(ifNode->getFalseBranch());
             }
         }
+        else if (auto defNode = dynamic_cast<FunctionDefinitionNode*>(node.get())) {
+            // This is a bit of a hack for const-correctness, but safe here.
+            dictionary[defNode->getName()] = const_cast<FunctionDefinitionNode*>(defNode)->releaseBody();
+        }
         else if (auto wordNode = dynamic_cast<const WordNode*>(node.get())) {
             const auto& token = wordNode->getToken();
+
+            // Check if the word is a user-defined function
+            auto it = dictionary.find(token.text);
+            if (it != dictionary.end()) {
+                // If found, execute the function's body
+                evaluate(*(it->second));
+                continue; // Skip the switch statement for built-in words
+            }
+
+            // If not a user-defined function, check built-in words
             switch (token.type) {
                 case TokenType::Plus: {
                     double b = pop();
@@ -146,6 +160,10 @@ void Interpreter::evaluate(const ProgramNode& ast) {
                 case TokenType::Cr: {
                     std::cout << std::endl;
                     break;
+                }
+                case TokenType::If: case TokenType::Else: case TokenType::Then:
+                case TokenType::Colon: case TokenType::Semicolon: {
+                    throw std::runtime_error("Unexpected control flow word during execution: " + token.text);
                 }
                 default: {
                     throw std::runtime_error("Unknown word: " + token.text);

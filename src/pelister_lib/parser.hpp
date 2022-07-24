@@ -11,6 +11,7 @@ public:
 private:
     std::unique_ptr<AstNode> parseStatement();
     std::unique_ptr<IfNode> parseIfStatement();
+    std::unique_ptr<FunctionDefinitionNode> parseFunctionDefinition();
 
     Lexer& lexer;
     Token currentToken;

@@ -2,6 +2,9 @@
 
 #include "ast.hpp"
 #include <vector>
+#include <string>
+#include <unordered_map>
+#include <memory>
 
 class Interpreter {
 public:
@@ -14,4 +17,5 @@ private:
     double pop();
 
     std::vector<double> stack;
+    std::unordered_map<std::string, std::unique_ptr<ProgramNode>> dictionary;
 };
