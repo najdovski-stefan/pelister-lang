@@ -153,3 +153,39 @@ TEST_F(InterpreterTest, ParserThrowsOnUnterminatedIf) {
     EXPECT_THROW(run(interpreter, "1 IF 100"), std::runtime_error);
     EXPECT_THROW(run(interpreter, "1 IF 100 ELSE 200"), std::runtime_error);
 }
+TEST_F(InterpreterTest, SimpleFunctionDefinitionAndCall) {
+    run(interpreter, ": DOUBLE 2 * ; 10 DOUBLE");
+    const auto& stack = interpreter.getStack();
+    ASSERT_EQ(stack.size(), 1);
+    EXPECT_EQ(stack[0], 20.0);
+}
+
+TEST_F(InterpreterTest, FunctionCallingAnotherFunction) {
+    run(interpreter, ": DOUBLE 2 * ; : QUADRUPLE DOUBLE DOUBLE ; 5 QUADRUPLE");
+    const auto& stack = interpreter.getStack();
+    ASSERT_EQ(stack.size(), 1);
+    EXPECT_EQ(stack[0], 20.0);
+}
+
+TEST_F(InterpreterTest, FunctionWithLogicAndControlFlow) {
+    run(interpreter, ": ABS DUP 0 < IF -1 * THEN ;");
+
+    run(interpreter, "-10 ABS");
+    EXPECT_EQ(interpreter.getStack().back(), 10.0);
+    run(interpreter, "DROP");
+
+    run(interpreter, "15 ABS");
+    EXPECT_EQ(interpreter.getStack().back(), 15.0);
+    run(interpreter, "DROP");
+
+    run(interpreter, "0 ABS");
+    EXPECT_EQ(interpreter.getStack().back(), 0.0);
+}
+
+TEST_F(InterpreterTest, CallingUndefinedFunctionThrows) {
+    EXPECT_THROW(run(interpreter, "UNDEFINED-WORD"), std::runtime_error);
+}
+
+TEST_F(InterpreterTest, ParserThrowsOnUnterminatedFunction) {
+    EXPECT_THROW(run(interpreter, ": BROKEN 1 2 +"), std::runtime_error);
+}
