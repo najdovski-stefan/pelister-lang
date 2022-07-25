@@ -1,3 +1,5 @@
 build
 commit.sh
+clean.sh
+log.txt
 .DS_Store
