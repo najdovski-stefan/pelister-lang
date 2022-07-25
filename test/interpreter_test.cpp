@@ -189,3 +189,143 @@ TEST_F(InterpreterTest, CallingUndefinedFunctionThrows) {
 TEST_F(InterpreterTest, ParserThrowsOnUnterminatedFunction) {
     EXPECT_THROW(run(interpreter, ": BROKEN 1 2 +"), std::runtime_error);
 }
+
+TEST_F(InterpreterTest, MemoryOperations) {
+    run(interpreter, "123 100 !"); // Store 123 at address 100
+    run(interpreter, "100 @");    // Fetch from address 100
+    const auto& stack = interpreter.getStack();
+    ASSERT_EQ(stack.size(), 1);
+    EXPECT_EQ(stack[0], 123.0);
+    EXPECT_THROW(run(interpreter, "99999 !"), std::runtime_error); // Out of bounds
+}
+
+TEST_F(InterpreterTest, DoLoopOperation) {
+    // 5 0 DO I + LOOP -> should calculate 0+1+2+3+4 = 10
+    run(interpreter, "0 5 0 DO I + LOOP");
+    const auto& stack = interpreter.getStack();
+    ASSERT_EQ(stack.size(), 1);
+    EXPECT_EQ(stack[0], 10.0);
+}
+
+TEST_F(InterpreterTest, NestedDoLoop) {
+    run(interpreter, "2 0 DO 3 0 DO I LOOP LOOP");
+    const auto& stack = interpreter.getStack();
+    // The inner loop (0..2) runs, pushing 0 1 2.
+    // The outer loop (0..1) runs twice.
+    // So we expect 0 1 2 pushed, then 0 1 2 pushed again.
+    ASSERT_EQ(stack.size(), 6);
+    EXPECT_EQ(stack[0], 0.0);
+    EXPECT_EQ(stack[1], 1.0);
+    EXPECT_EQ(stack[2], 2.0);
+    EXPECT_EQ(stack[3], 0.0);
+    EXPECT_EQ(stack[4], 1.0);
+    EXPECT_EQ(stack[5], 2.0);
+}
+
+TEST_F(InterpreterTest, LoopWithConditional) {
+    // Sums even numbers from 0 to 9 (0+2+4+6+8 = 20)
+    run(interpreter, "0 10 0 DO I DUP 2 MOD 0 = IF + ELSE DROP THEN LOOP");
+    const auto& stack = interpreter.getStack();
+    ASSERT_EQ(stack.size(), 1);
+    EXPECT_EQ(stack[0], 20.0);
+}
+
+TEST_F(InterpreterTest, LoopWithComment) {
+    // 5 0 DO I + LOOP -> should calculate 0+1+2+3+4 = 10
+    // The comment should be ignored by the lexer and parser.
+    run(interpreter, "0 5 0 DO ( this is a comment ) I + LOOP");
+    const auto& stack = interpreter.getStack();
+    ASSERT_EQ(stack.size(), 1);
+    EXPECT_EQ(stack[0], 10.0);
+}
+
+TEST_F(InterpreterTest, FunctionWithLoop) {
+    run(interpreter, ": SUM-UP-TO ( limit -- sum ) 0 SWAP 0 DO I + LOOP ;");
+    run(interpreter, "5 SUM-UP-TO");
+    const auto& stack = interpreter.getStack();
+    ASSERT_EQ(stack.size(), 1);
+    EXPECT_EQ(stack[0], 10.0); // 0+1+2+3+4
+}
+
+TEST_F(InterpreterTest, FunctionWithCommentAndLogic) {
+    run(interpreter, ": IS-POSITIVE ( n -- boolean ) DUP 0 > ( check if n > 0 ) ;");
+
+    run(interpreter, "10 IS-POSITIVE");
+    EXPECT_EQ(interpreter.getStack().back(), 1.0);
+    run(interpreter, "DROP");
+
+    run(interpreter, "-5 IS-POSITIVE");
+    EXPECT_EQ(interpreter.getStack().back(), 0.0);
+    run(interpreter, "DROP");
+
+    run(interpreter, "0 IS-POSITIVE");
+    EXPECT_EQ(interpreter.getStack().back(), 0.0);
+}
+
+
+TEST_F(InterpreterTest, ComplexFunctionWithLoopAndConditional) {
+    run(interpreter, ": SUM-EVENS ( limit -- sum ) 0 SWAP 0 DO I DUP 2 MOD 0 = IF + ELSE DROP THEN LOOP ;");
+    run(interpreter, "10 SUM-EVENS");
+    const auto& stack = interpreter.getStack();
+    ASSERT_EQ(stack.size(), 1);
+    EXPECT_EQ(stack[0], 20.0); // 0+2+4+6+8
+}
+
+TEST_F(InterpreterTest, CommentsInsideControlFlow) {
+    run(interpreter, "1 IF ( true branch ) 100 ELSE ( false branch ) 200 THEN");
+    EXPECT_EQ(interpreter.getStack().back(), 100.0);
+    run(interpreter, "DROP");
+
+    run(interpreter, "0 IF ( true branch ) 100 ELSE ( false branch ) 200 THEN");
+    EXPECT_EQ(interpreter.getStack().back(), 200.0);
+}
+
+TEST_F(InterpreterTest, MemoryStoreAndFetchList) {
+    // Store 5 values (10, 20, 30, 40, 50) starting at memory address 200.
+    run(interpreter, "10 200 !");
+    run(interpreter, "20 201 !");
+    run(interpreter, "30 202 !");
+    run(interpreter, "40 203 !");
+    run(interpreter, "50 204 !");
+
+    // Fetch them back onto the stack in order.
+    run(interpreter, "200 @ 201 @ 202 @ 203 @ 204 @");
+
+    const auto& stack = interpreter.getStack();
+    ASSERT_EQ(stack.size(), 5);
+    EXPECT_EQ(stack[0], 10.0);
+    EXPECT_EQ(stack[1], 20.0);
+    EXPECT_EQ(stack[2], 30.0);
+    EXPECT_EQ(stack[3], 40.0);
+    EXPECT_EQ(stack[4], 50.0);
+}
+
+TEST_F(InterpreterTest, MemoryListManipulationWithLoop) {
+    // Store values (i+1)*10 for i=0..4 at addresses 300+i.
+    // This stores 10, 20, 30, 40, 50.
+    run(interpreter, "5 0 DO I 1 + 10 * 300 I + ! LOOP");
+
+    // Now, sum them up. 0 is the initial sum on the stack.
+    run(interpreter, "0 5 0 DO 300 I + @ + LOOP");
+
+    const auto& stack = interpreter.getStack();
+    ASSERT_EQ(stack.size(), 1);
+    EXPECT_EQ(stack[0], 150.0); // 10+20+30+40+50
+}
+
+TEST_F(InterpreterTest, MemoryListModifyAndVerify) {
+    // Store 5, 15, 25 at addresses 50, 51, 52
+    run(interpreter, "5 50 ! 15 51 ! 25 52 !");
+
+    // Modify the middle element: store 99 at address 51
+    run(interpreter, "99 51 !");
+
+    // Fetch all three values
+    run(interpreter, "50 @ 51 @ 52 @");
+
+    const auto& stack = interpreter.getStack();
+    ASSERT_EQ(stack.size(), 3);
+    EXPECT_EQ(stack[0], 5.0);
+    EXPECT_EQ(stack[1], 99.0); // Verifying the modified value
+    EXPECT_EQ(stack[2], 25.0);
+}
