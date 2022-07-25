@@ -1,0 +1,29 @@
+: COMPARE-AND-SWAP
+    DUP @ OVER 1 + @
+    OVER OVER > IF
+        >R OVER 1 + ! R> SWAP !
+    ELSE
+        DROP DROP DROP
+    THEN ;
+
+: BUBBLE-SORT
+    >R
+    R@ 1 - 0 DO
+        R@ I - 1 - 0 DO
+            DUP I +
+            COMPARE-AND-SWAP
+        LOOP
+    LOOP
+    R> DROP
+    DROP ;
+
+50 400 !
+20 401 !
+80 402 !
+10 403 !
+30 404 !
+-30 405 !
+
+400 6 BUBBLE-SORT
+
+400 @ 401 @ 402 @ 403 @ 404 @ 405 @
