@@ -68,3 +68,13 @@ private:
     std::string name;
     std::unique_ptr<ProgramNode> body;
 };
+
+class DoLoopNode : public AstNode {
+public:
+    DoLoopNode(std::unique_ptr<ProgramNode> body) : body(std::move(body)) {}
+    std::string toString() const override { return "DO-LOOP"; }
+    const ProgramNode& getBody() const { return *body; }
+    std::unique_ptr<ProgramNode> releaseBody() { return std::move(body); }
+private:
+    std::unique_ptr<ProgramNode> body;
+};

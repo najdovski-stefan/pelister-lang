@@ -29,7 +29,9 @@ static const std::unordered_map<std::string, TokenType> keywords = {
     {"THEN", TokenType::Then},
     {"DO", TokenType::Do},
     {"LOOP", TokenType::Loop},
+    {"I", TokenType::LoopIndexI},
     {".", TokenType::Dot},
+    {".S", TokenType::DotS},
     {"EMIT", TokenType::Emit},
     {"CR", TokenType::Cr}
 };

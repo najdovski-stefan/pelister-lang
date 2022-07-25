@@ -4,7 +4,10 @@
 Parser::Parser(Lexer& lexer) : lexer(lexer), currentToken({TokenType::Unknown, ""}) {
     advance();
 }
-void Parser::advance() { currentToken = lexer.getNextToken(); }
+
+void Parser::advance() {
+    currentToken = lexer.getNextToken();
+}
 
 std::unique_ptr<ProgramNode> Parser::parse() {
     auto programNode = std::make_unique<ProgramNode>();
@@ -15,8 +18,15 @@ std::unique_ptr<ProgramNode> Parser::parse() {
 }
 
 std::unique_ptr<AstNode> Parser::parseStatement() {
-    if (currentToken.type == TokenType::If) return parseIfStatement();
-    if (currentToken.type == TokenType::Colon) return parseFunctionDefinition();
+    if (currentToken.type == TokenType::If) {
+        return parseIfStatement();
+    }
+    if (currentToken.type == TokenType::Colon) {
+        return parseFunctionDefinition();
+    }
+    if (currentToken.type == TokenType::Do) {
+        return parseDoLoop();
+    }
 
     std::unique_ptr<AstNode> node;
     if (currentToken.type == TokenType::Number) {
@@ -48,23 +58,49 @@ std::unique_ptr<FunctionDefinitionNode> Parser::parseFunctionDefinition() {
 }
 
 std::unique_ptr<IfNode> Parser::parseIfStatement() {
-    advance();
+    advance(); // Consume 'IF'
+
     auto true_branch = std::make_unique<ProgramNode>();
     while (currentToken.type != TokenType::Else && currentToken.type != TokenType::Then) {
-        if (currentToken.type == TokenType::EndOfFile) throw std::runtime_error("Unterminated IF; missing THEN");
+        if (currentToken.type == TokenType::EndOfFile) {
+            throw std::runtime_error("Unterminated IF statement; missing THEN");
+        }
         true_branch->addNode(parseStatement());
     }
+
     std::unique_ptr<ProgramNode> false_branch = nullptr;
     if (currentToken.type == TokenType::Else) {
-        advance();
+        advance(); // Consume 'ELSE'
         false_branch = std::make_unique<ProgramNode>();
         while (currentToken.type != TokenType::Then) {
-            if (currentToken.type == TokenType::EndOfFile) throw std::runtime_error("Unterminated ELSE; missing THEN");
+            if (currentToken.type == TokenType::EndOfFile) {
+                throw std::runtime_error("Unterminated IF..ELSE statement; missing THEN");
+            }
             false_branch->addNode(parseStatement());
         }
     }
-    if (currentToken.type != TokenType::Then) throw std::runtime_error("Expected THEN to close IF");
-    advance();
-    if (!false_branch) false_branch = std::make_unique<ProgramNode>();
+
+    if (currentToken.type != TokenType::Then) {
+        throw std::runtime_error("Expected THEN to close IF statement");
+    }
+    advance(); // Consume 'THEN'
+
+    if (!false_branch) {
+        false_branch = std::make_unique<ProgramNode>();
+    }
+
     return std::make_unique<IfNode>(std::move(true_branch), std::move(false_branch));
+}
+
+std::unique_ptr<DoLoopNode> Parser::parseDoLoop() {
+    advance(); // Consume 'DO'
+    auto body = std::make_unique<ProgramNode>();
+    while (currentToken.type != TokenType::Loop) {
+        if (currentToken.type == TokenType::EndOfFile) {
+            throw std::runtime_error("Unterminated DO loop; missing LOOP");
+        }
+        body->addNode(parseStatement());
+    }
+    advance(); // Consume 'LOOP'
+    return std::make_unique<DoLoopNode>(std::move(body));
 }

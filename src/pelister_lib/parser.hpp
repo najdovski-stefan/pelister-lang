@@ -7,12 +7,11 @@ class Parser {
 public:
     explicit Parser(Lexer& lexer);
     std::unique_ptr<ProgramNode> parse();
-
 private:
     std::unique_ptr<AstNode> parseStatement();
     std::unique_ptr<IfNode> parseIfStatement();
     std::unique_ptr<FunctionDefinitionNode> parseFunctionDefinition();
-
+    std::unique_ptr<DoLoopNode> parseDoLoop();
     Lexer& lexer;
     Token currentToken;
     void advance();
