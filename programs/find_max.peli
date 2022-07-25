@@ -1,0 +1,22 @@
+: MAX ( n1 n2 -- max )
+    OVER OVER > IF
+        DROP
+    ELSE
+        SWAP DROP
+    THEN ;
+
+17 200 !
+-99 201 !
+42 202 !
+55 203 !
+
+200 @
+201 @
+MAX
+
+202 @
+203 @
+MAX
+
+MAX
+.S
