@@ -366,7 +366,6 @@ TEST_F(InterpreterTest, CompareAndSwapFunction) {
     )";
     run(interpreter, compareAndSwapCode);
 
-    // Test Case 1: Values need swapping (30 > 10)
     run(interpreter, "30 100 !  10 101 !");  // Store 30 at addr 100, 10 at addr 101
     run(interpreter, "100 COMPARE-AND-SWAP"); // Should swap them
     run(interpreter, "100 @ 101 @");          // Fetch both values
@@ -376,10 +375,8 @@ TEST_F(InterpreterTest, CompareAndSwapFunction) {
     EXPECT_EQ(stack[0], 10.0) << "After swap, addr 100 should contain 10";
     EXPECT_EQ(stack[1], 30.0) << "After swap, addr 101 should contain 30";
 
-    // Clear stack for next test
     run(interpreter, "DROP DROP");
 
-    // Test Case 2: Values already in order (5 < 15)
     run(interpreter, "5 200 !  15 201 !");    // Store 5 at addr 200, 15 at addr 201
     run(interpreter, "200 COMPARE-AND-SWAP"); // Should NOT swap them
     run(interpreter, "200 @ 201 @");          // Fetch both values
@@ -389,10 +386,8 @@ TEST_F(InterpreterTest, CompareAndSwapFunction) {
     EXPECT_EQ(stack[0], 5.0) << "No swap needed, addr 200 should still contain 5";
     EXPECT_EQ(stack[1], 15.0) << "No swap needed, addr 201 should still contain 15";
 
-    // Clear stack for next test
     run(interpreter, "DROP DROP");
 
-    // Test Case 3: Equal values (20 == 20)
     run(interpreter, "20 300 !  20 301 !");   // Store 20 at both addresses
     run(interpreter, "300 COMPARE-AND-SWAP"); // Should NOT swap them
     run(interpreter, "300 @ 301 @");          // Fetch both values
@@ -407,12 +402,10 @@ TEST_F(InterpreterTest, NestedLoopIndicesIJK) {
     const auto& stack = interpreter.getStack();
     ASSERT_EQ(stack.size(), 24 * 3); // 2*3*4 = 24 iterations, 3 pushes per iteration
 
-    // Test the first iteration of the innermost loop
     EXPECT_EQ(stack[0], 0); // I
     EXPECT_EQ(stack[1], 0); // J
     EXPECT_EQ(stack[2], 0); // K
 
-    // Test the last iteration of the innermost loop
     EXPECT_EQ(stack[3*3], 3); // I=3, J=0, K=0
     EXPECT_EQ(stack[3*3+1], 0);
     EXPECT_EQ(stack[3*3+2], 0);
@@ -421,7 +414,6 @@ TEST_F(InterpreterTest, NestedLoopIndicesIJK) {
     EXPECT_EQ(stack[19], 1); // J
     EXPECT_EQ(stack[20], 0); // K
 
-    // Test the very last iteration
     EXPECT_EQ(stack[stack.size() - 3], 3); // I
     EXPECT_EQ(stack[stack.size() - 2], 2); // J
     EXPECT_EQ(stack[stack.size() - 1], 1); // K
