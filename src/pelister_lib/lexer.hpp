@@ -12,6 +12,7 @@ enum class TokenType {
 
     // Stack Manipulation
     Dup, Drop, Swap, Over, Rot,
+    ToR, RFrom, RFetch, // >R, R>, R@
 
     // Comparison
     Equals, LessThan, GreaterThan,

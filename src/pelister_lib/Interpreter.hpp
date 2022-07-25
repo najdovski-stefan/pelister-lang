@@ -15,9 +15,12 @@ public:
 private:
     void push(double value);
     double pop();
+    void rpush(double value);
+    double rpop();
 
     std::vector<double> stack;
     std::unordered_map<std::string, std::unique_ptr<ProgramNode>> dictionary;
     std::vector<double> memory;
     std::vector<long> loop_indices;
+    std::vector<double> return_stack;
 };

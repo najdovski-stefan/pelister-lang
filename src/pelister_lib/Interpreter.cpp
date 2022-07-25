@@ -19,6 +19,20 @@ double Interpreter::pop() {
     return value;
 }
 
+void Interpreter::rpush(double value) {
+    return_stack.push_back(value);
+}
+
+double Interpreter::rpop() {
+    if (return_stack.empty()) {
+        throw std::runtime_error("Return stack underflow");
+    }
+    double value = return_stack.back();
+    return_stack.pop_back();
+    return value;
+}
+
+
 const std::vector<double>& Interpreter::getStack() const {
     return stack;
 }
@@ -114,6 +128,21 @@ void Interpreter::evaluate(const ProgramNode& ast) {
                 }
                 case TokenType::Rot: {
                     double c = pop(); double b = pop(); double a = pop(); push(b); push(c); push(a); break;
+                }
+                case TokenType::ToR: { // >R
+                    rpush(pop());
+                    break;
+                }
+                case TokenType::RFrom: { // R>
+                    push(rpop());
+                    break;
+                }
+                case TokenType::RFetch: { // R@
+                    if (return_stack.empty()) {
+                        throw std::runtime_error("Return stack underflow");
+                    }
+                    push(return_stack.back());
+                    break;
                 }
                 case TokenType::Store: {
                     double addr = pop(); double val = pop(); if (addr < 0 || addr >= memory.size()) throw std::runtime_error("Memory access out of bounds"); memory[(size_t)addr] = val; break;
