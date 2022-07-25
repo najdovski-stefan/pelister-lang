@@ -157,6 +157,20 @@ void Interpreter::evaluate(const ProgramNode& ast) {
                     push(loop_indices.back());
                     break;
                 }
+                case TokenType::LoopIndexJ: {
+                    if (loop_indices.size() < 2) {
+                        throw std::runtime_error("'J' can only be used inside nested DO...LOOPs");
+                    }
+                    push(loop_indices[loop_indices.size() - 2]);
+                    break;
+                }
+                case TokenType::LoopIndexK: {
+                    if (loop_indices.size() < 3) {
+                        throw std::runtime_error("'K' can only be used inside triply-nested DO...LOOPs");
+                    }
+                    push(loop_indices[loop_indices.size() - 3]);
+                    break;
+                }
                 case TokenType::Dot: {
                     std::cout << pop() << " "; break;
                 }

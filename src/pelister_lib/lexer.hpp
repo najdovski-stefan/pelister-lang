@@ -29,6 +29,8 @@ enum class TokenType {
     // Control Flow
     If, Else, Then, Do, Loop,
     LoopIndexI,
+    LoopIndexJ,
+    LoopIndexK,
 
     // I/O
     Dot, Emit, Cr,DotS,
