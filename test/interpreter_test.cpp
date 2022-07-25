@@ -347,41 +347,116 @@ TEST_F(InterpreterTest, ReturnStackOperations) {
     EXPECT_THROW(run(interpreter, "R>"), std::runtime_error); // Return stack underflow
 }
 
-TEST_F(InterpreterTest, BubbleSortListInMemory) {
-    // --- SETUP ---
-    // Store an unsorted list [50, 20, 90, 10] at memory address 400
-    run(interpreter, "50 400 !  20 401 !  90 402 !  10 403 !");
-
-    // --- ALGORITHM DEFINITION ---
-    // Define a full bubble sort algorithm
-    const std::string bubbleSortCode = R"(
+TEST_F(InterpreterTest, CompareAndSwapFunction) {
+    // Define COMPARE-AND-SWAP function
+    const std::string compareAndSwapCode = R"(
         : COMPARE-AND-SWAP ( addr -- )
-            DUP @ >R        ( R: val1 )
-            1 + DUP @ >R     ( R: val2 val1 )
-            R@ R> < IF      ( if val2 < val1 )
-                R@ >R         ( R: val1 val2 val1 )
-                SWAP !        ( store val1 at addr+1 )
-                R> R> DROP !  ( store val2 at addr )
+            DUP @            ( addr val1 )
+            OVER 1 + @       ( addr val1 val2 )
+            OVER OVER        ( addr val1 val2 val1 val2 )
+            > IF             ( if val1 > val2 )
+                >R           ( addr val1, R: val2 -- save val2 )
+                OVER 1 + !   ( addr, R: val2 -- store val1 at addr+1 )
+                R>           ( addr val2 )
+                SWAP         ( val2 addr )
+                !            ( -- store val2 at addr )
             ELSE
-                R> R> DROP DROP
+                DROP DROP DROP  ( Clean up stack if no swap needed )
             THEN ;
-
-        : SORT ( addr len -- )
-            1 - 0 DO
-                OVER OVER + 1 - SWAP DO
-                    I COMPARE-AND-SWAP
-                LOOP
-            LOOP DROP DROP ;
     )";
-    run(interpreter, bubbleSortCode);
-    run(interpreter, "400 4 SORT"); // Sort the list at address 400 with length 4
+    run(interpreter, compareAndSwapCode);
 
-    // --- VERIFICATION ---
-    run(interpreter, "400 @ 401 @ 402 @ 403 @"); // Fetch the sorted list
+    // Test Case 1: Values need swapping (30 > 10)
+    run(interpreter, "30 100 !  10 101 !");  // Store 30 at addr 100, 10 at addr 101
+    run(interpreter, "100 COMPARE-AND-SWAP"); // Should swap them
+    run(interpreter, "100 @ 101 @");          // Fetch both values
+
+    auto stack = interpreter.getStack();
+    ASSERT_EQ(stack.size(), 2);
+    EXPECT_EQ(stack[0], 10.0) << "After swap, addr 100 should contain 10";
+    EXPECT_EQ(stack[1], 30.0) << "After swap, addr 101 should contain 30";
+
+    // Clear stack for next test
+    run(interpreter, "DROP DROP");
+
+    // Test Case 2: Values already in order (5 < 15)
+    run(interpreter, "5 200 !  15 201 !");    // Store 5 at addr 200, 15 at addr 201
+    run(interpreter, "200 COMPARE-AND-SWAP"); // Should NOT swap them
+    run(interpreter, "200 @ 201 @");          // Fetch both values
+
+    stack = interpreter.getStack();
+    ASSERT_EQ(stack.size(), 2);
+    EXPECT_EQ(stack[0], 5.0) << "No swap needed, addr 200 should still contain 5";
+    EXPECT_EQ(stack[1], 15.0) << "No swap needed, addr 201 should still contain 15";
+
+    // Clear stack for next test
+    run(interpreter, "DROP DROP");
+
+    // Test Case 3: Equal values (20 == 20)
+    run(interpreter, "20 300 !  20 301 !");   // Store 20 at both addresses
+    run(interpreter, "300 COMPARE-AND-SWAP"); // Should NOT swap them
+    run(interpreter, "300 @ 301 @");          // Fetch both values
+
+    stack = interpreter.getStack();
+    ASSERT_EQ(stack.size(), 2);
+    EXPECT_EQ(stack[0], 20.0) << "Equal values, addr 300 should still contain 20";
+    EXPECT_EQ(stack[1], 20.0) << "Equal values, addr 301 should still contain 20";
+}
+TEST_F(InterpreterTest, NestedLoopIndicesIJK) {
+    run(interpreter, "2 0 DO 3 0 DO 4 0 DO I J K LOOP LOOP LOOP");
     const auto& stack = interpreter.getStack();
-    ASSERT_EQ(stack.size(), 4);
+    ASSERT_EQ(stack.size(), 24 * 3); // 2*3*4 = 24 iterations, 3 pushes per iteration
+
+    // Test the first iteration of the innermost loop
+    EXPECT_EQ(stack[0], 0); // I
+    EXPECT_EQ(stack[1], 0); // J
+    EXPECT_EQ(stack[2], 0); // K
+
+    // Test the last iteration of the innermost loop
+    EXPECT_EQ(stack[3*3], 3); // I=3, J=0, K=0
+    EXPECT_EQ(stack[3*3+1], 0);
+    EXPECT_EQ(stack[3*3+2], 0);
+
+    EXPECT_EQ(stack[18], 2); // I
+    EXPECT_EQ(stack[19], 1); // J
+    EXPECT_EQ(stack[20], 0); // K
+
+    // Test the very last iteration
+    EXPECT_EQ(stack[stack.size() - 3], 3); // I
+    EXPECT_EQ(stack[stack.size() - 2], 2); // J
+    EXPECT_EQ(stack[stack.size() - 1], 1); // K
+}
+
+TEST_F(InterpreterTest, BubbleSortWithJ) {
+    run(interpreter, R"(
+        : COMPARE-AND-SWAP DUP @ OVER 1 + @ OVER OVER > IF
+            >R OVER 1 + ! R> SWAP !
+        ELSE DROP DROP DROP THEN ;
+    )");
+
+    run(interpreter, R"(
+        : BUBBLE-SORT ( addr len -- )
+            >R                  ( R: len )
+            R@ 1 - 0 DO         ( Outer loop for passes, index J )
+                R@ I - 1 - 0 DO ( Inner loop for comparisons, index I )
+                    DUP I +     ( Calculate addr: base_addr + inner_loop_index )
+                    COMPARE-AND-SWAP
+                LOOP
+            LOOP
+            R> DROP             ( Clean up len )
+            DROP                ( Clean up addr )
+        ;
+    )");
+
+    run(interpreter, "50 400 !  20 401 !  80 402 !  10 403 !  30 404 !");
+    run(interpreter, "400 5 BUBBLE-SORT");
+    run(interpreter, "400 @ 401 @ 402 @ 403 @ 404 @");
+
+    const auto& stack = interpreter.getStack();
+    ASSERT_EQ(stack.size(), 5);
     EXPECT_EQ(stack[0], 10.0);
     EXPECT_EQ(stack[1], 20.0);
-    EXPECT_EQ(stack[2], 50.0);
-    EXPECT_EQ(stack[3], 90.0);
+    EXPECT_EQ(stack[2], 30.0);
+    EXPECT_EQ(stack[3], 50.0);
+    EXPECT_EQ(stack[4], 80.0);
 }
