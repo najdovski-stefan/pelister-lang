@@ -329,3 +329,59 @@ TEST_F(InterpreterTest, MemoryListModifyAndVerify) {
     EXPECT_EQ(stack[1], 99.0); // Verifying the modified value
     EXPECT_EQ(stack[2], 25.0);
 }
+
+TEST_F(InterpreterTest, ReturnStackOperations) {
+    run(interpreter, "10 20 >R"); // data: [10], return: [20]
+    EXPECT_EQ(interpreter.getStack().size(), 1);
+    EXPECT_EQ(interpreter.getStack().back(), 10.0);
+
+    run(interpreter, "R@"); // data: [10, 20], return: [20]
+    ASSERT_EQ(interpreter.getStack().size(), 2);
+    EXPECT_EQ(interpreter.getStack()[0], 10.0);
+    EXPECT_EQ(interpreter.getStack()[1], 20.0);
+
+    run(interpreter, "R>"); // data: [10, 20, 20], return: []
+    ASSERT_EQ(interpreter.getStack().size(), 3);
+    EXPECT_EQ(interpreter.getStack()[2], 20.0);
+
+    EXPECT_THROW(run(interpreter, "R>"), std::runtime_error); // Return stack underflow
+}
+
+TEST_F(InterpreterTest, BubbleSortListInMemory) {
+    // --- SETUP ---
+    // Store an unsorted list [50, 20, 90, 10] at memory address 400
+    run(interpreter, "50 400 !  20 401 !  90 402 !  10 403 !");
+
+    // --- ALGORITHM DEFINITION ---
+    // Define a full bubble sort algorithm
+    const std::string bubbleSortCode = R"(
+        : COMPARE-AND-SWAP ( addr -- )
+            DUP @ >R        ( R: val1 )
+            1 + DUP @ >R     ( R: val2 val1 )
+            R@ R> < IF      ( if val2 < val1 )
+                R@ >R         ( R: val1 val2 val1 )
+                SWAP !        ( store val1 at addr+1 )
+                R> R> DROP !  ( store val2 at addr )
+            ELSE
+                R> R> DROP DROP
+            THEN ;
+
+        : SORT ( addr len -- )
+            1 - 0 DO
+                OVER OVER + 1 - SWAP DO
+                    I COMPARE-AND-SWAP
+                LOOP
+            LOOP DROP DROP ;
+    )";
+    run(interpreter, bubbleSortCode);
+    run(interpreter, "400 4 SORT"); // Sort the list at address 400 with length 4
+
+    // --- VERIFICATION ---
+    run(interpreter, "400 @ 401 @ 402 @ 403 @"); // Fetch the sorted list
+    const auto& stack = interpreter.getStack();
+    ASSERT_EQ(stack.size(), 4);
+    EXPECT_EQ(stack[0], 10.0);
+    EXPECT_EQ(stack[1], 20.0);
+    EXPECT_EQ(stack[2], 50.0);
+    EXPECT_EQ(stack[3], 90.0);
+}
