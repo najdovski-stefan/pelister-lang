@@ -25,48 +25,66 @@ A simple, stack-based interpreted programming language inspired by Forth.
 
 ## Supported Operations
 
-### Stack
-| Word | Effect | Description |
-| :--- | :--- | :----------- |
-| `DUP`| `( a -- a a )` | Duplicates top item. |
-| `DROP`| `( a -- )` | Discards top item. |
-| `SWAP`| `( a b -- b a )`| Swaps top two items. |
-| `OVER`| `( a b -- a b a )` | Copies 2nd item to top. |
-| `ROT`| `( a b c -- b c a )` | Rotates top three items. |
-| `>R` | `( a -- )` | Move item to return stack. |
-| `R>` | `( -- a )` | Move item from return stack. |
-| `R@` | `( -- a )` | Copy item from return stack. |
+### Core Stack Manipulation
+| Word | Name | Stack Effect | Description |
+| :--- | :--- | :--- | :----------- |
+| `DUP`| Duplicate | `( a -- a a )` | Duplicates the top number. |
+| `DROP`| Drop | `( a -- )` | Discards the top number. |
+| `SWAP`| Swap | `( a b -- b a )`| Swaps the top two numbers. |
+| `OVER`| Over | `( a b -- a b a )` | Copies the second number to the top. |
+| `ROT`| Rotate | `( a b c -- b c a )` | Rotates the top three numbers. |
+| `>R` | To Return | `( a -- )` | Moves the top of the data stack to the return stack. |
+| `R>` | From Return | `( -- a )` | Moves the top of the return stack to the data stack. |
+| `R@` | Fetch Return| `( -- a )` | Copies the top of the return stack to the data stack. |
 
-### Math & Logic
-| Word | Effect | Description |
-| :--- | :--- | :----------- |
-| `+` `-` `*` `/` | `( a b -- res )` | Standard arithmetic. |
-| `MOD`| `( a b -- rem )` | Remainder of `a / b`. |
-| `AND` `OR` | `( a b -- res )` | Bitwise operations. |
-| `NOT`| `( a -- flag )` | Logical not (0 -> 1, else -> 0). |
-| `=` `<` `>` | `( a b -- flag )` | Comparisons (return 1 or 0). |
+### Arithmetic & Logical
+| Word | Name | Stack Effect | Description |
+| :--- | :--- | :--- | :----------- |
+| `+` | Add | `( a b -- sum )` | Adds `a` and `b`. |
+| `-` | Subtract | `( a b -- diff )` | Subtracts `b` from `a`. |
+| `*` | Multiply | `( a b -- prod )` | Multiplies `a` and `b`. |
+| `/` | Divide | `( a b -- quot )` | Divides `a` by `b`. |
+| `MOD`| Modulo | `( a b -- rem )` | Computes the remainder of `a / b`. |
+| `AND`| Bitwise AND | `( a b -- res )` | Performs a bitwise AND. |
+| `OR` | Bitwise OR | `( a b -- res )` | Performs a bitwise OR. |
+| `NOT`| Logical NOT | `( a -- flag )`| Returns `1` if `a` is `0`, otherwise `0`. |
+
+### Comparison
+| Word | Name | Stack Effect | Description |
+| :--- | :--- | :--- | :----------- |
+| `=` | Equals | `( a b -- flag )` | Returns `1` if `a == b`, else `0`. |
+| `<` | Less Than | `( a b -- flag )` | Returns `1` if `a < b`, else `0`. |
+| `>` | Greater Than| `( a b -- flag )` | Returns `1` if `a > b`, else `0`. |
 
 ### Memory
-| Word | Effect | Description |
-| :--- | :--- | :----------- |
-| `!` | `( val addr -- )` | Store `val` at `addr`. |
-| `@` | `( addr -- val )` | Fetch value from `addr`. |
+| Word | Name | Stack Effect | Description |
+| :--- | :--- | :--- | :----------- |
+| `!` | Store | `( val addr -- )` | Stores value `val` at memory `addr`. |
+| `@` | Fetch | `( addr -- val )` | Fetches the value from memory `addr`. |
 
-### Control Flow & Functions
-| Word | Description |
-| :--- | :----------- |
-| `:` `;` | Define a new word. Usage: `: NAME ... ;` |
-| `IF ELSE THEN` | Conditional execution. |
-| `DO LOOP` | Counted loop. Usage: `limit start DO ... LOOP` |
-| `I` `J` `K` | Loop counters for nested loops (inner to outer). |
+### Defining Words & Control Flow
+| Word | Name | Stack Effect | Description |
+| :--- | :--- | :--- | :----------- |
+| `:` | Colon | `( -- )` | Starts a new word definition. Usage: `: NAME ... ;` |
+| `;` | Semicolon | `( -- )` | Ends a word definition. |
+| `IF` | If | `( flag -- )` | Executes code until `ELSE` or `THEN` if `flag` is non-zero. |
+| `ELSE`| Else | `( -- )` | Executes code until `THEN` if the `IF` condition was false. |
+| `THEN`| Then | `( -- )` | Marks the end of an `IF...THEN` or `IF...ELSE...THEN` block. |
+| `DO` | Do | `( limit start -- )` | Starts a loop that runs from `start` up to (but not including) `limit`. |
+| `LOOP`| Loop | `( -- )` | Marks the end of a `DO...LOOP`. Increments the index by 1. |
+| `I` | Loop Index I | `( -- index )`| Pushes the index of the innermost loop. |
+| `J` | Loop Index J | `( -- index )`| Pushes the index of the next-outer loop. |
+| `K` | Loop Index K | `( -- index )`| Pushes the index of the third-level loop. |
 
-### I/O
-| Word | Description |
-| :--- | :----------- |
-| `.` | Print and pop the top of the stack. |
-| `.S` | Print the entire stack without changing it. |
-| `CR` | Print a newline. |
-
+### Input/Output
+| Word | Name | Stack Effect | Description |
+| :--- | :--- | :--- | :----------- |
+| `.` | Dot (Print)| `( a -- )` | Prints and removes the top number, followed by a space. |
+| `.S` | Dot-S (Stack) | `( -- )` | Prints the entire contents of the stack without changing it. |
+| `."`| Dot-Quote | `( -- )` | Prints the string that follows it, up to the next `"`. |
+| `ACCEPT`| Accept | `( addr len -- len' )` | Reads a line of user input into a buffer at `addr`. |
+| `>NUMBER`| To-Number | `( addr len -- num )`| Converts a string in memory to a number on the stack. |
+| `CR` | Carriage Return| `( -- )` | Prints a newline character. |
 ---
 
 ## References
