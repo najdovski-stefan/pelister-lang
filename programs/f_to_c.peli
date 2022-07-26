@@ -1,6 +1,14 @@
-( Converts Fahrenheit temp to Celsius )
-( USAGE: Put a temperature on the stack first! e.g 77 )
+( This program asks the user for a temperature in Fahrenheit and converts it to Celsius )
 
-77
-32 - 5 * 9 /
-CR . ( Print the result and a newline )
+CR
+." Please enter a temperature in Fahrenheit: "
+
+500 80 ACCEPT
+
+500 SWAP >NUMBER
+
+32 -
+5 *
+9 /
+
+." The temperature in Celsius is: " . CR
