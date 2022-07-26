@@ -181,11 +181,57 @@ void Interpreter::evaluate(const ProgramNode& ast) {
                 case TokenType::Cr: {
                     std::cout << std::endl; break;
                 }
+                case TokenType::DotQuote: {
+                                    std::cout << token.text;
+                                    break;
+                                }
+                case TokenType::Accept: {
+                                   double max_len = pop();
+                                   double addr = pop();
+
+                                   if (addr < 0 || addr + max_len > memory.size()) {
+                                       throw std::runtime_error("ACCEPT memory out of bounds");
+                                   }
+
+                                   std::string input_line;
+                                   std::getline(std::cin, input_line);
+
+                                   size_t actual_len = std::min((size_t)max_len, input_line.length());
+
+                                   for (size_t i = 0; i < actual_len; ++i) {
+                                       memory[(size_t)addr + i] = static_cast<double>(input_line[i]);
+                                   }
+
+                                   push(static_cast<double>(actual_len));
+                                   break;
+                               }
+                               case TokenType::ToNumber: {
+                                   double len = pop();
+                                   double addr = pop();
+
+                                   if (addr < 0 || addr + len > memory.size()) {
+                                       throw std::runtime_error(">NUMBER memory out of bounds");
+                                   }
+
+                                   std::string str_to_convert;
+                                   for (size_t i = 0; i < (size_t)len; ++i) {
+                                       str_to_convert += static_cast<char>(memory[(size_t)addr + i]);
+                                   }
+
+                                   try {
+                                       double num = std::stod(str_to_convert);
+                                       push(num);
+                                   } catch (const std::invalid_argument& e) {
+                                       throw std::runtime_error("Invalid number format for >NUMBER");
+                                   }
+                                   break;
+                               }
                 case TokenType::If: case TokenType::Else: case TokenType::Then:
                 case TokenType::Colon: case TokenType::Semicolon:
                 case TokenType::Do: case TokenType::Loop: {
                     throw std::runtime_error("Unexpected control flow word during execution: " + token.text);
                 }
+
                 default: {
                     throw std::runtime_error("Unknown word: " + token.text);
                 }

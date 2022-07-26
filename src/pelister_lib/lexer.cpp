@@ -38,7 +38,9 @@ static const std::unordered_map<std::string, TokenType> keywords = {
     {".", TokenType::Dot},
     {".S", TokenType::DotS},
     {"EMIT", TokenType::Emit},
-    {"CR", TokenType::Cr}
+    {"CR", TokenType::Cr},
+    {"ACCEPT", TokenType::Accept},
+    {">NUMBER", TokenType::ToNumber}
 };
 
 bool is_double(const std::string& s) {
@@ -58,6 +60,19 @@ Token Lexer::getNextToken() {
     if (position >= source_text.length()) {
         return {TokenType::EndOfFile, ""};
     }
+
+    if (source_text.substr(position, 2) == ".\"") {
+            position += 2; // Consume ."
+            size_t start = position;
+            while (position < source_text.length() && source_text[position] != '"') {
+                position++;
+            }
+            std::string text = source_text.substr(start, position - start);
+            if (position < source_text.length()) {
+                position++; // Consume the closing "
+            }
+            return {TokenType::DotQuote, text};
+        }
 
     if (source_text[position] == '(') {
         position++; // Consume the initial '('

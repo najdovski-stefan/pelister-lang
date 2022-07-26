@@ -33,7 +33,9 @@ enum class TokenType {
     LoopIndexK,
 
     // I/O
-    Dot, Emit, Cr,DotS,
+    Dot, Emit, Cr,DotS,DotQuote,
+    Accept,
+    ToNumber,
 
     // Special / End
     LeftParen,
