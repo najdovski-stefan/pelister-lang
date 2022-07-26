@@ -4,6 +4,15 @@ A simple, stack-based interpreted programming language inspired by Forth.
 
 ## Usage
 
+### Building:
+
+```bash
+mkdir build
+cd build
+cmake ..
+make
+```
+
 ### Run a file:
 ```bash
 ./bin/pelilang programs/bubble_sort.peli
