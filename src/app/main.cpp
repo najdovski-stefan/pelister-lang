@@ -4,23 +4,36 @@
 #include <filesystem>
 #include <fstream>
 #include <sstream>
-
+#include <cstdlib>
 #include "lexer.hpp"
 #include "parser.hpp"
 #include "AstVisualizer.hpp"
 #include "Interpreter.hpp"
+#include "linenoise.h"
 
 void runRepl() {
     Interpreter interpreter;
-    std::cout << "Pelister-Lang REPL v1.0. Type 'bye' to exit." << std::endl;
+    std::cout << "Pelister-Lang REPL v1.0. Type 'bye' or press Ctrl-D to exit." << std::endl;
 
-    for (;;) {
-        std::cout << "> ";
-        std::string line;
-        if (!std::getline(std::cin, line) || line == "bye") {
+    linenoiseHistoryLoad("history.txt");
+
+    char* line_c;
+    const char* prompt = "> ";
+
+    while ((line_c = linenoise(prompt)) != nullptr) {
+        std::string line(line_c);
+        free(line_c); // linenoise free
+
+        if (line == "bye") {
             break;
         }
-        if (line.empty()) continue;
+
+        if (line.empty()) {
+            continue;
+        }
+
+        linenoiseHistoryAdd(line.c_str());
+        linenoiseHistorySave("history.txt");
 
         try {
             Lexer lexer(line);
