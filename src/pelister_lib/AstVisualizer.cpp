@@ -11,11 +11,13 @@ void AstVisualizer::generateDot(const AstNode& root, const std::string& outputPa
 
     outFile << "digraph AST {\n";
     outFile << "  rankdir=TB;\n";
-    outFile << "  node [shape=box];\n";
+    outFile << "  node [shape=box, style=rounded];\n";
+    outFile << "  edge [arrowhead=vee];\n";
     generateDotRecursive(root, outFile);
     outFile << "}\n";
 
     std::cout << "AST visualization saved to " << outputPath << std::endl;
+    std::cout << "To generate a PNG, run: dot -Tpng " << outputPath << " -o ast.png" << std::endl;
 }
 
 void AstVisualizer::generateDotRecursive(const AstNode& node, std::ostream& out) {
@@ -28,5 +30,26 @@ void AstVisualizer::generateDotRecursive(const AstNode& node, std::ostream& out)
             generateDotRecursive(*child, out);
             out << "  node" << myId << " -> node" << childId << ";\n";
         }
+    }
+    else if (auto ifNode = dynamic_cast<const IfNode*>(&node)) {
+        long trueBranchId = nodeCounter;
+        generateDotRecursive(ifNode->getTrueBranch(), out);
+        out << "  node" << myId << " -> node" << trueBranchId << " [label=\"true\"];\n";
+
+        if (ifNode->hasFalseBranch() && !ifNode->getFalseBranch().getNodes().empty()) {
+            long falseBranchId = nodeCounter;
+            generateDotRecursive(ifNode->getFalseBranch(), out);
+            out << "  node" << myId << " -> node" << falseBranchId << " [label=\"false\"];\n";
+        }
+    }
+    else if (auto funcDefNode = dynamic_cast<const FunctionDefinitionNode*>(&node)) {
+        long bodyId = nodeCounter;
+        generateDotRecursive(funcDefNode->getBody(), out);
+        out << "  node" << myId << " -> node" << bodyId << " [label=\"body\"];\n";
+    }
+    else if (auto doLoopNode = dynamic_cast<const DoLoopNode*>(&node)) {
+        long bodyId = nodeCounter;
+        generateDotRecursive(doLoopNode->getBody(), out);
+        out << "  node" << myId << " -> node" << bodyId << " [label=\"body\"];\n";
     }
 }
