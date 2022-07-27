@@ -101,3 +101,4 @@ make
 - [Forth](https://en.wikipedia.org/wiki/Forth_(programming_language))
 - [Google Test](https://github.com/google/googletest/)
 - [Graphviz](https://graphviz.org/)
+- [Linenoise](https://github.com/antirez/linenoise/)
