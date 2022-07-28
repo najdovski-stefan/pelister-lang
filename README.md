@@ -1,4 +1,7 @@
-# Pelister Programming Language
+<h1>
+  <img src="peli-logo.png" alt="Peli Logo" style="height:40px; vertical-align:middle; margin-right:10px;">
+  Pelister Programming Language
+</h1>
 
 A simple, stack-based interpreted programming language inspired by Forth.
 
