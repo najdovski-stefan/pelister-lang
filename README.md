@@ -1,6 +1,6 @@
 <h1>
   Pelister Programming Language
-  <img src="peli-logo.png" alt="Peli Logo" style="height:120px; vertical-align:middle; margin-left:10px;">
+  <img src="peli-logo.png" alt="Peli Logo" style="height:80px; vertical-align:middle; margin-left:10px;">
 </h1>
 
 
